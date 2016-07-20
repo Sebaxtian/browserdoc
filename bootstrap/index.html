@@ -1,0 +1,37 @@
+<html>
+  <head>
+    <title>BrowserDoc App</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script src="js/jquery-3.1.0.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/jquery.bootpag.min.js"></script>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+
+  </head>
+
+  <body>
+
+      <div class="container">
+          <div class="row">
+              <div class="page-header">
+                  <h1>Buscador de Documentos <small>- Proyecto Mineria de Datos -</small></h1>
+              </div>
+          </div>
+          <div class="row">
+              <div id="content">Dynamic Content goes here</div>
+              <div id="page-selection">Pagination goes here</div>
+              <script>
+                // init bootpag
+                $('#page-selection').bootpag({
+                    total: 10
+                }).on("page", function(event, /* page number here */ num){
+                    $("#content").html("Insert content"); // some ajax content loading...
+                });
+              </script>
+          </div>
+      </div>
+  </body>
+
+</html>
