@@ -10,7 +10,7 @@
 	if(isset($consulta)) {
         $msgestado = "Consulta Recibida";
 
-        $output = shell_exec('/usr/local/jdk/jdk1.8.0_92/bin/java -jar /var/www/html/browserdoc/bootstrap/bin/Searcher/BrowserDocSearcher.jar /home/sebaxtian/Descargas/BrowserDoc/index/ "oswaldo solarte" 2>&1');
+        $output = shell_exec('/usr/local/jdk/jdk1.8.0_92/bin/java -jar /var/www/html/browserdoc/bootstrap/bin/Searcher/BrowserDocSearcher.jar /var/www/html/BrowserDoc/index/ "'.$consulta.'" 2>&1');
         $jsonbusqueda = json_decode($output);
 
         $exito = true;

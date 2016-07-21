@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <script src="js/jquery-3.1.0.min.js"></script>
+    <script src="js/jquery-migrate-3.0.0.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="js/jquery.bootpag.min.js"></script>
     <link rel="stylesheet" href="css/bootstrap.min.css">
@@ -20,18 +21,144 @@
               </div>
           </div>
           <div class="row">
-              <div id="content">Dynamic Content goes here</div>
-              <div id="page-selection">Pagination goes here</div>
-              <script>
-                // init bootpag
-                $('#page-selection').bootpag({
-                    total: 10
-                }).on("page", function(event, /* page number here */ num){
-                    $("#content").html("Insert content"); // some ajax content loading...
-                });
-              </script>
+              <div class="input-group" style="width:512px; margin-left: auto; margin-right: auto; margin-top: 60px">
+                  <input id="textConsulta" type="text" class="form-control" placeholder="Buscar documento ...">
+                  <span class="input-group-btn">
+                      <button id="btnBuscar" type="button" class="btn btn-primary">Buscar</button>
+                  </span>
+              </div>
+          </div>
+          <div class="row">
+              <div id="content" style="margin-top: 60px">
+                  <div id="resultStats"></div>
+                  <div id="resultados">
+                  </div>
+              </div>
+              <div id="page-selection" style="width:420px; margin-left: auto; margin-right: auto;"></div>
           </div>
       </div>
+
+
+      <script>
+        // A $( document ).ready() block.
+        $( document ).ready(function() {
+            console.log( "DOM Ready!" );
+
+            $( "#btnBuscar" ).on( "click", function() {
+                console.log("Click en Boton Buscar");
+                var consultaStr = $("#textConsulta").val();
+                console.log("Consulta: " + consultaStr);
+                // Realiza la busqueda
+                buscarDoc(consultaStr);
+            });
+
+
+            function procesaURL(path) {
+                // /var/www/html/BrowserDoc/data/Introduccion.pdf
+                var url = path.substring(14, path.length);
+                console.log("URL = " + url);
+                return url;
+            }
+
+
+            function paginacion(documentos) {
+                console.log("documentos.length = " + documentos.length);
+                // Inicia el paginador
+                $('#page-selection').bootpag({
+                    total: Math.ceil(documentos.length / 5),
+                    page: 1,
+                    maxVisible: 10
+                }).on("page", function(event, /* page number here */ num){
+                    //$("#content").html("Insert content"); // some ajax content loading...
+                    // Itera por cada uno de los documentos encontrados
+                    console.log("Pagina = " + num);
+                    $("#resultados").html("");
+                    for(var i = ((num - 1) * 5); i < ((num - 1) * 5) + 5; i++) {
+                        if(i < documentos.length) {
+                            var strResult = "<div class='result'>" +
+                                                "<h3>" + documentos[i].documento + "</h3>" +
+                                                "<cite>" +
+                                                    //"" + documentos[i].archivo + "<br>" +
+                                                    "<a href='http://localhost/" + procesaURL(documentos[i].archivo) + "' target='_blank'>" + procesaURL(documentos[i].archivo) + "</a>" + "<br>" +
+                                                    "Fecha Creado: " + documentos[i].fechacreado + "<br>" +
+                                                    "Paginas: " + documentos[i].paginas + "<br>" +
+                                                    "Tipo: " + documentos[i].tipo + "<br>" +
+                                                    "Ranking: " + documentos[i].ranking + "<br>" +
+                                                    "Id: " + documentos[i].docid + "<br>" +
+                                                "</cite>" +
+                                            "</div>";
+                            console.log("strResult = " + strResult);
+                            $("#resultados").append(strResult);
+                        }
+                    }
+                });
+
+                $( "#page-selection" ).trigger( "page", [1] );
+            }
+
+
+            // Funcion para realizar busqueda
+            function buscarDoc(consultaStr) {
+                // Inicia proceso AJAX para Busqueda
+                $.ajax({
+                    url: "searcher.php",
+                    method: "POST",
+                    data: { consulta : consultaStr },
+                    dataType: "json"
+                })
+                .done(function( msg ) {
+                    // Exito en comunicacion AJAX
+                    console.log("Peticion AJAX Termina: " + msg.msgestado);
+                    // Cuando la busqueda se realiza con exito
+                    if(msg.exito) {
+                        console.log("Exito al realizar busqueda");
+                        // Objeto JSON de resultados de busqueda
+                        //var jsonBusqueda = JSON.parse(msg.busqueda);
+                        var jsonBusqueda = msg.busqueda;
+                        if(jsonBusqueda != null) {
+                            console.log("Se obtiene un resultado de busqueda");
+                            console.log("jsonBusqueda = " + JSON.stringify(jsonBusqueda));
+                            // Atributos del resultados
+                            var numresults = jsonBusqueda.numresults;
+                            var dirindex = jsonBusqueda.dirindex;
+                            var numdocs = jsonBusqueda.numdocs;
+                            var tiempo = jsonBusqueda.tiempo;
+                            var consulta = jsonBusqueda.consulta;
+                            console.log("Numero de Resultados: " + numresults);
+                            console.log("Directorio Index: " + dirindex);
+                            console.log("Numero de Documentos: " + numdocs);
+                            console.log("Tiempo: " + tiempo);
+                            console.log("Consulta: " + consulta);
+                            // Muestra los atributos de resultados
+                            $("#resultStats").html("Directorio Index: " + dirindex + " Cerca de " + numresults + " resultados (" + tiempo + " milisegundos) en " + numdocs + " documentos");
+                            // Documentos encontrados
+                            var documentos = jsonBusqueda.documentos;
+                            console.log("documentos.length = " + documentos.length);
+                            paginacion(documentos);
+                        } else {
+                            console.log("No se obtiene resultado en la busqueda");
+                            $("#resultStats").html("No se encuentran documentos");
+                            $("#resultados").html("");
+                            $("#page-selection").html("");
+                        }
+                    } else {
+                        // Cuando la busqueda no tiene exito
+                        console.log("Error al realizar busqueda");
+                        $("#resultStats").html("No se encuentran documentos");
+                        $("#resultados").html("");
+                        $("#page-selection").html("");
+                    }
+                })
+                .fail(function( jqXHR, textStatus ) {
+                    // Error en comunicacion AJAX
+                    console.log( "Peticion AJAX Falla: " + textStatus + " StatusCode: " + jqXHR.status );
+                });
+            }
+
+        });
+      </script>
+
+
   </body>
 
 </html>
